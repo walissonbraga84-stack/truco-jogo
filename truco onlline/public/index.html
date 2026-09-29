@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🃏 Truco — Solo & Amigos</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: radial-gradient(circle at top, #174b32, #07140e 70%); color: #fff; min-height: 100vh; }
+        header { text-align: center; padding: 15px; background: #06110b; border-bottom: 2px solid #d8b15a; }
+        h1 { color: #ffd86b; font-size: 1.7rem; }
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from {opacity:0; transform:translateY(10px);} to {opacity:1; transform:translateY(0);} }
+        .start-container { max-width: 500px; margin: 40px auto; text-align: center; padding: 30px 25px; background: #0d2418; border: 2px solid #315b43; border-radius: 16px; }
+        h2 { color: #ffd86b; margin-bottom: 20px; }
+        .mode-btn { display: block; width: 100%; margin: 12px 0; padding: 16px; font-size: 1.1rem; background: linear-gradient(135deg, #d7a92d, #b8860b); color: #171006; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        .mode-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .solo-btn { background: linear-gradient(135deg, #2e7d32, #1b5e20); color: #fff; }
+        .back-btn { background: #424242; color: #fff; margin-top: 15px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #50735d; background: #07140e; color: #fff; font-size: 1rem; }
+        .codigo-sala { font-size: 2rem; font-weight: bold; color: #ffd86b; margin: 15px 0; padding: 10px; background: rgba(255,215,0,0.1); border-radius: 8px; letter-spacing: 5px; }
+        .aviso { background: rgba(76,175,80,0.2); border: 1px solid #4CAF50; padding: 10px; border-radius: 8px; margin: 10px 0; }
+        .lista-jogadores { margin: 15px 0; text-align: left; }
+        .jogador-item { padding: 8px 12px; margin: 5px 0; border-radius: 6px; display: flex; justify-content: space-between; }
+        .j1,.j2 { background: rgba(100,181,246,0.2); border-left: 3px solid #64b5f6; }
+        .j3,.j4 { background: rgba(255,152,0,0.2); border-left: 3px solid #ff9800; }
+        .pronto { color: #4CAF50; font-weight: bold; }
+        .esperando { color: #888; font-style: italic; }
+        .top-bar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; padding: 10px; }
+        .panel { background: #0d2418; border: 1px solid #315b43; border-radius: 10px; padding: 10px 15px; text-align: center; min-width: 130px; }
+        .gold { color: #ffd86b; font-weight: bold; font-size: 1.2rem; }
+        .team1 { color: #64b5f6; font-weight: bold; }
+        .team2 { color: #ff9800; font-weight: bold; }
+        .score-num { font-size: 1.6rem; font-weight: bold; }
+        .table-container { max-width: 950px; margin: 10px auto; padding: 0 10px; }
+        .table { position: relative; min-height: 580px; border-radius: 24px; background: radial-gradient(circle, #237348, #0b3923); border: 6px solid #5b351c; overflow: hidden; }
+        .deck-lateral { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); z-index: 5; text-align: center; }
+        .deck-pile { position: relative; width: 65px; height: 95px; margin: 0 auto 5px; }
+        .deck-card { position: absolute; width: 60px; height: 90px; background: linear-gradient(135deg, #a81c25, #e63946); border-radius: 10px; border: 3px solid #ffd86b; }
+        .deck-label { font-size: 0.8rem; color: #ffd86b; font-weight: bold; }
+        .vira-container { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); text-align: center; z-index: 5; display: none; }
+        .vira-label { font-size: 0.8rem; color: #ffd86b; font-weight: bold; margin-bottom: 4px; }
+        .vira-card { width: 65px; height: 95px; background: #fff; color: #111; border-radius: 10px; border: 3px solid #ffd86b; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.3rem; }
+        .mesa-centro { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 400px; height: 240px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; padding: 8px; }
+        .espaco-cartas { border-radius: 10px; padding: 5px; display: flex; align-items: center; justify-content: center; min-height: 100px; flex-wrap: wrap; gap: 4px; }
+        .espaco-p1 { grid-column: 1/3; grid-row: 2; background: rgba(100,181,246,0.15); border: 2px solid rgba(100,181,246,0.3); }
+        .espaco-p2 { grid-column: 1/3; grid-row: 1; background: rgba(100,181,246,0.15); border: 2px solid rgba(100,181,246,0.3); }
+        .espaco-p3 { grid-column: 1; grid-row: 1/3; background: rgba(255,152,0,0.15); border: 2px solid rgba(255,152,0,0.3); }
+        .espaco-p4 { grid-column: 2; grid-row: 1/3; background: rgba(255,152,0,0.15); border: 2px solid rgba(255,152,0,0.3); }
+        .jogador-label { position: absolute; font-size: 0.7rem; font-weight: bold; opacity: 0.7; padding: 2px 4px; pointer-events: none; }
+        .lbl-p1 { bottom: 2px; left: 50%; transform: translateX(-50%); color: #90caf9; }
+        .lbl-p2 { top: 2px; left: 50%; transform: translateX(-50%); color: #90caf9; }
+        .lbl-p3 { left: 2px; top: 50%; transform: translateY(-50%); color: #ffcc80; writing-mode: vertical-rl; }
+        .lbl-p4 { right: 2px; top: 50%; transform: translateY(-50%); color: #ffcc80; writing-mode: vertical-rl; }
+        .seat { position: absolute; width: 180px; text-align: center; transition: transform 0.2s; }
+        .seat.turno-atual { transform: scale(1.05); }
+        .p1 { bottom: 10px; left: 50%; transform: translateX(-50%); }
+        .p2 { top: 10px; left: 50%; transform: translateX(-50%); }
+        .p3 { left: 10px; top: 50%; transform: translateY(-50%); }
+        .p4 { right: 95px; top: 50%; transform: translateY(-50%); }
+        .player-name { font-weight: bold; margin-bottom: 6px; padding: 3px 8px; border-radius: 6px; display: inline-block; font-size: 0.85rem; }
+        .t1 { background: rgba(100,181,246,0.2); color: #90caf9; }
+        .t2 { background: rgba(255,152,0,0.2); color: #ffcc80; }
+        .hand { display: flex; justify-content: center; gap: 4px; min-height: 90px; flex-wrap: wrap; }
+        .card { width: 55px; height: 80px; background: #fff; color: #111; border-radius: 8px; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
+        .card:hover:not(.disabled) { transform: translateY(-8px); }
+        .card.disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .card-back { background: linear-gradient(135deg, #a81c25, #e63946); color: transparent; border-color: #b71c1c; }
+        .played-card { animation: playCard 0.3s ease; margin: 2px; }
+        @keyframes playCard { from {transform:scale(0.7);opacity:0;} to {transform:scale(1);opacity:1;} }
+        .turn-indicator { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.5); padding: 5px 12px; border-radius: 8px; color: #ffd86b; font-weight: bold; font-size: 0.9rem; }
+        .controls { text-align: center; margin: 10px; }
+        button { border: none; border-radius: 8px; padding: 10px 15px; font-size: 1rem; font-weight: bold; cursor: pointer; margin: 4px; }
+        .btn-truco { background: linear-gradient(135deg, #e53935, #c62828); color: #fff; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(229,57,53,0.4);} 70%{box-shadow:0 0 0 8px rgba(229,57,53,0);} }
+        .btn-truco:disabled { animation: none; opacity: 0.5; }
+        .dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #0d2418; border: 3px solid #ffd86b; border-radius: 15px; padding: 25px; z-index: 100; text-align: center; display: none; }
+        .dialog.active { display: block; }
+        .tela-fim { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.92); border: 4px solid #ffd86b; border-radius: 20px; padding: 35px; z-index: 200; text-align: center; display: none; }
+        .tela-fim.active { display: block; }
+        .copiar-btn { background: #4CAF50; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; margin-left: 8px; cursor: pointer; }
+        .erro-msg { color: #ff6b6b; margin-top: 10px; }
+        .log { max-height: 100px; overflow-y: auto; font-size: 0.8rem; color: #aaa; margin-top: 10px; }
+        .log p { margin: 2px 0; }
+    </style>
+</head>
+<body>
+    <header><h1>🃏 TRUCO — Jogue do Seu Jeito!</h1></header>
+
+    <div id="dialogTruco" class="dialog">
+        <h3 id="tituloTruco">🔥 TRUCO!</h3>
+        <p id="msgTruco"></p>
+        <button class="btn-accept" onclick="responderTruco(true)">✅ Aceitar</button>
+        <button class="btn-more" id="btnPedirMais" onclick="responderTruco(true, true)">🔺 Pedir Mais</button>
+        <button class="btn-refuse" onclick="responderTruco(false)">❌ Correr</button>
+    </div>
+    <div id="telaFim" class="tela-fim">
+        <h2 id="tituloFim">🏆 FIM DE PARTIDA 🏆</h2>
+        <p id="msgFim"></p>
+        <button class="mode-btn" onclick="voltarInicio()">🔄 Jogar Novamente</button>
+    </div>
+
+    <div id="app">
+        <div id="telaInicio" class="screen active">
+            <div class="start-container">
+                <h2>Escolha como jogar:</h2>
+                <button class="mode-btn solo-btn" onclick="iniciarSolo()">🎮 Jogar Solo (contra máquina)</button>
+                <button class="mode-btn" onclick="mostrarTela('telaEscolhaOnline')">🌐 Jogar com Amigos (Online)</button>
+            </div>
+        </div>
+
+        <div id="telaEscolhaOnline" class="screen">
+            <div class="start-container">
+                <h2>🌐 Jogar com Amigos</h2>
+                <button class="mode-btn" onclick="mostrarTela('telaCriar')">➕ Criar Sala</button>
+                <button class="mode-btn sub-btn" onclick="mostrarTela('telaEntrar')">🚪 Entrar na Sala</button>
+                <button class="mode-btn back-btn" onclick="mostrarTela('telaInicio')">← Voltar</button>
+            </div>
+        </div>
+
+        <div id="telaCriar" class="screen">
+            <div class="start-container">
+                <h2>➕ Criar Sala</h2>
+                <input type="text" id="meuNomeCriar" placeholder="Seu nome" maxlength="14">
+                <button class="mode-btn sub-btn" onclick="criarSala()">Criar Sala</button>
+                <button class="mode-btn back-btn" onclick="mostrarTela('telaEscolhaOnline')">← Voltar</button>
+                <p id="erroCriar" class="erro-msg"></p>
+            </div>
+        </div>
+
+        <div id="telaEntrar" class="screen">
+            <div class="start-container">
+                <h2>🚪 Entrar na Sala</h2>
+                <input type="text" id="codigoSala" placeholder="Código da sala" maxlength="6" style="text-transform:uppercase;">
+                <input type="text" id="meuNomeEntrar" placeholder="Seu nome" maxlength="14">
+                <button class="mode-btn sub-btn" onclick="entrarSala()">Entrar</button>
+                <button class="mode-btn back-btn" onclick="mostrarTela('telaEscolhaOnline')">← Voltar</button>
+                <p id="erroEntrar" class="erro-msg"></p>
+            </div>
+        </div>
+
+        <div id="telaEspera" class="screen">
+            <div class="start-container">
+                <h2>🏠 Sala Pronta!</h2>
+                <div class="aviso">Compartilhe com seus amigos:
+                    <div class="codigo-sala" id="codigoExibido"></div>
+                    <button class="copiar-btn" onclick="copiarCodigo()">📋 Copiar</button>
+                </div>
+                <div class="lista-jogadores" id="listaJogadores"></div>
+                <button class="mode-btn sub-btn" id="btnIniciar" onclick="iniciarJogo()">▶ Iniciar Partida</button>
+                <button class="mode-btn back-btn" onclick="voltarInicio()">← Sair</button>
+            </div>
+        </div>
+
+        <div id="telaJogo" class="screen">
+            <div class="top-bar">
+                <div class="panel"><span class="team1">🔵 Time 1</span><br><span class="score-num" id="placar1">0</span>/12</div>
+                <div class="panel">Valor da Mão<br><span class="gold" id="valorMao">1</span></div>
+                <div class="panel"><span class="team2">🟠 Time 2</span><br><span class="score-num" id="placar2">0</span>/12</div>
+            </div>
+            <div class="table-container">
+                <div class="table">
+                    <div class="turn-indicator" id="vezIndica">Aguardando...</div>
+                    <div class="deck-lateral"><div class="deck-pile"><div class="deck-card" style="top:0;left:0;"></div><div class="deck-card" style="top:2px;left:1px;"></div><div class="deck-card" style="top:4px;left:2px;"></div></div><div class="deck-label">BARALHO</div></div>
+                    <div class="vira-container" id="viraDiv"><div class="vira-label">VIRA</div><div class="vira-card" id="cartaVira"></div></div>
+                    <div class="mesa-centro" id="mesaCentro">
+                        <div class="espaco-cartas espaco-p2" id="espacoP2"><span class="jogador-label lbl-p2" id="lblP2">Parceiro</span></div>
+                        <div class="espaco-cartas espaco-p3" id="espacoP3"><span class="jogador-label lbl-p3" id="lblP3">Inimigo 1</span></div>
+                        <div class="espaco-cartas espaco-p4" id="espacoP4"><span class="jogador-label lbl-p4" id="lblP4">Inimigo 2</span></div>
+                        <div class="espaco-cartas espaco-p1" id="espacoP1"><span class="jogador-label lbl-p1" id="lblP1">Você</span></div>
+                    </div>
+                    <div class="seat p1" id="lugar1"><div class="player-name t1" id="nome1">Você</div><div class="hand" id="mao1"></div></div>
+                    <div class="seat p2" id="lugar2"><div class="player-name t1" id="nome2">Parceiro</div><div class="hand" id="mao2"></div></div>
+                    <div class="seat p3" id="lugar3"><div class="player-name t2" id="nome3">Inimigo 1</div><div class="hand" id="mao3"></div></div>
+                    <div class="seat p4" id="lugar4"><div class="player-name t2" id="nome4">Inimigo 2</div><div class="hand" id="mao4"></div></div>
+                </div>
+            </div>
+            <div class="controls">
+                <button class="btn-truco" id="btnTruco" onclick="pedirTruco()">🔥 TRUCO!</button>
+                <button onclick="voltarInicio()">🏠 Sair</button>
+            </div>
+            <div class="panel" style="max-width:400px;margin:0 auto;">
+                <b>📋 Histórico</b>
+                <div class="log" id="historico"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let minhaPosicao = null, meuNome = '', salaCodigo = null, modoSolo = false;
+        let jogoSolo = null;
+
+        function mostrarTela(id) {
+            document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function iniciarSolo() {
+            modoSolo = true;
+            mostrarTela('telaJogo');
+            inicializarSolo();
+        }
+
+        function inicializarSolo() {
+            const NAIPES = ['♣','♥','♠','♦'], VALORES = ['4','5','6','7','Q','J','K','A','2','3'];
+            jogoSolo = {
+                nomes: ['Você','Parceiro 🤖','Inimigo 1 🤖','Inimigo 2 🤖'],
+                maos: [[],[],[],[]], jogadasRodada: [], vez:0, valorMao:1, placar:[0,0],
+                rodadasGanhasMaoAtual:[0,0], vira:null, emAndamento:true,
+                truco:{pendente:false,deQuem:null,proposto:0}
+            };
+            distribuirNovaMaoSolo(0);
+        }
+
+        function criarBaralhoSolo() {
+            let b=[];
+            for(let v of VALORES) for(let n of NAIPES) b.push({valor:v,naipe:n,carta:v+n});
+            return b.sort(()=>Math.random()-0.5);
+        }
+
+        function forcaCartaSolo(carta, vira) {
+            const idxV = VALORES.indexOf(vira.valor);
+            const manilha = VALORES[(idxV+1)%10];
+            if(carta.valor===manilha) return {'♦':11,'♠':12,'♥':13,'♣':14}[carta.naipe];
+            return VALORES.indexOf(carta.valor);
+        }
+
+        async function distribuirNovaMaoSolo(quemComeca) {
+            jogoSolo.maos=[[],[],[],[]]; jogoSolo.jogadasRodada=[];
+            jogoSolo.rodadasGanhasMaoAtual=[0,0]; jogoSolo.valorMao=1;
+            const baralho = criarBaralhoSolo();
+            for(let c=0;c<3;c++) for(let p=0;p<4;p++) jogoSolo.maos[p].push(baralho.pop());
+            jogoSolo.vira = baralho.pop();
+            jogoSolo.vez = quemComeca;
+            atualizarTelaSolo();
+            if(jogoSolo.vez!==0) setTimeout(jogarBotSolo, 800);
+        }
+
+        function atualizarTelaSolo() {
+            document.getElementById('placar1').textContent = jogoSolo.placar[0];
+            document.getElementById('placar2').textContent = jogoSolo.placar[1];
+            document.getElementById('valorMao').textContent = jogoSolo.valorMao;
+            document.getElementById('cartaVira').textContent = jogoSolo.vira.carta;
+            ['nome1','nome2','nome3','nome4'].forEach((id,i)=>document.getElementById(id).textContent=jogoSolo.nomes[i]);
+            ['lblP1','lblP2','lblP3','lblP4'].forEach((id,i)=>document.getElementById(id).textContent=jogoSolo.nomes[i]);
+            
+            const minhaMao = document.getElementById('mao1');
+            minhaMao.innerHTML='';
+            const ehMinhaVez = jogoSolo.vez===0;
+            jogoSolo.maos[0].forEach((c,i)=>{
+                const div=document.createElement('div');
+                div.className = `card ${!ehMinhaVez?'disabled':''}`;
+                div.textContent = c.carta;
+                if(ehMinhaVez) div.onclick=()=>jogarCartaSolo(i);
+                minhaMao.appendChild(div);
+            });
+            
+            for(let p=1;p<4;p++) {
+                const el=document.getElementById(`mao${p+1}`);
+                el.innerHTML='';
+                for(let c=0;c<jogoSolo.maos[p].length;c++){
+                    const div=document.createElement('div');
+                    div.className='card card-back';
+                    el.appendChild(div);
+                }
+            }
+            
+            document.getElementById('vezIndica').textContent = ehMinhaVez ? '🎯 SUA VEZ!' : `Vez de: ${jogoSolo.nomes[jogoSolo.vez]}`;
+            document.getElementById('btnTruco').disabled = !ehMinhaVez || jogoSolo.valorMao>=12;
+            
+            for(let p=1;p<=4;p++){
+                const esp=document.getElementById(`espacoP${p}`);
+                const lbl=esp.querySelector('.jogador-label');
+                esp.innerHTML=''; esp.appendChild(lbl);
+            }
+            jogoSolo.jogadasRodada.forEach(j=>{
+                const esp=document.getElementById(`espacoP${j.jogador+1}`);
+                const lbl=esp.querySelector('.jogador-label');
+                esp.innerHTML=''; esp.appendChild(lbl);
+                const div=document.createElement('div');
+                div.className='card played-card';
+                div.textContent=j.carta.carta;
+                div.style.borderColor = j.jogador%2?'#ff9800':'#64b5f6';
+                esp.appendChild(div);
+            });
+        }
+
+        function jogarCartaSolo(indice) {
+            if(jogoSolo.vez!==0) return;
+            const carta = jogoSolo.maos[0].splice(indice,1)[0];
+            jogoSolo.jogadasRodada.push({jogador:0,carta});
+            proximoJogadorSolo();
+        }
+
+        async function jogarBotSolo() {
+            while(jogoSolo.vez!==0 && jogoSolo.jogadasRodada.length<4) {
+                await new Promise(r=>setTimeout(r,700));
+
+            }
+        }
